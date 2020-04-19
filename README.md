@@ -5,7 +5,7 @@ Try and catch in php objected oriented way
 
 ```php
 attempt(function ($method, $uri, $options) {
-      return $this->client->request('get','http://ninja.example/users');
+      return $this->client->request($method, $uri, $options);
   })
     ->using($method, $uri, $options)
     ->catch(ConnectException::class)
