@@ -1,0 +1,23 @@
+version: "3"
+
+services:
+  attempt:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: attempt
+    restart: unless-stopped
+    tty: true
+    working_dir: /var/www/html
+    environment:
+      SERVICE_TAGS: dev
+      SERVICE_NAME: attempt
+    volumes:
+      - ./:/var/www/html
+    networks:
+      - attempt-network
+
+#Docker Networks
+networks:
+  attempt-network:
+    driver: bridge

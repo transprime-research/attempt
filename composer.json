@@ -1,0 +1,41 @@
+{
+  "name": "transprime-research/attempt",
+  "description": "A fluent helper for object-oriented style of try-catch statements",
+  "license": "MIT",
+  "keywords": [
+    "Attempt",
+    "try and catch",
+    "Helpers",
+    "Laravel"
+  ],
+  "homepage": "https://omitobi.github.io/transprime-research/attempt/",
+  "support": {
+    "issues": "https://github.com/transprime-research/attempt/issues",
+    "source": "https://github.com/transprime-research/attempt/issues"
+  },
+  "authors": [
+    {
+      "name": "Oluwatobi Samuel Omisakin",
+      "email": "omisakin.oluwatobi@gmail.com"
+    }
+  ],
+  "require": {
+    "php": ">=7.4"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "~8.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Attempt\\": "src"
+    },
+    "files": [
+      "Helpers/helpers.php"
+    ]
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Attempt\\Tests\\": "tests/"
+    }
+  }
+}
