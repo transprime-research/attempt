@@ -13,6 +13,11 @@ class AttemptTest extends TestCase
         $this->assertIsObject(new Attempt());
     }
 
+    public function testAttemptHelperCreatesAttemptObject()
+    {
+        $this->assertEquals(attempt(fn() => 1), (new Attempt())->try(fn() => 1));
+    }
+
     public function testTryAndCatch()
     {
         $attempt = new Attempt();
@@ -38,7 +43,7 @@ class AttemptTest extends TestCase
 
         $attempter = function ($data) {
             return conditional(!isset($data[1]))
-                ->then(new AttemptTestException())
+                ->then(new AttemptTestException('1 does not exist in the data'))
                 ->else($data[1])
                 ->value();
         };
