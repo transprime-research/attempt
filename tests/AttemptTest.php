@@ -37,10 +37,10 @@ class AttemptTest extends TestCase
         $attempt = new Attempt();
 
         $attempter = function ($data) {
-            if (!isset($data[1])) {
-                throw new AttemptTestException();
-            }
-            return $data[1];
+            return conditional(!isset($data[1]))
+                ->then(new AttemptTestException())
+                ->else($data[1])
+                ->value();
         };
 
         $this->expectException(AttemptTestException::class);
