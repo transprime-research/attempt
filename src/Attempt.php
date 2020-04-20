@@ -36,17 +36,21 @@ class Attempt
 
     public function then()
     {
-        $triable = $this->triable;
-        $catchUsing = $this->catchUsing;
-
         try {
 
-            return $triable(...$this->tryUsing);
+            return $this->getTriable()(...$this->tryUsing);
 
         } catch (\Exception $exception) {
+            $catchUsing = $this->catchUsing;
+
             conditional(get_class($exception) === $this->catchable)
                 ->then(fn() => !$catchUsing ?: $catchUsing($exception))
                 ->else($exception);
         }
+    }
+
+    private function getTriable()
+    {
+        return $this->triable;
     }
 }
