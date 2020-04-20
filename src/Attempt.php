@@ -44,14 +44,9 @@ class Attempt
             return $triable(...$this->tryUsing);
 
         } catch (\Exception $exception) {
-
-            $caught = get_class($exception);
-
-            if ($caught === $this->catchable) {
-                !$catchUsing ?: $catchUsing($exception);
-            } else {
-                throw $exception;
-            }
+            conditional(get_class($exception) === $this->catchable)
+                ->then(fn() => !$catchUsing ?: $catchUsing($exception))
+                ->else($exception);
         }
     }
 }
