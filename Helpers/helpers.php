@@ -4,8 +4,13 @@ use Attempt\Attempt;
 
 if (!function_exists('attempt')) {
 
-    function attempt(Closure $action)
+    function attempt(Closure $action, ...$using)
     {
-        return (new Attempt())->try($action);
+        if (! $using) {
+            return (new Attempt())->try($action);
+        }
+
+        return (new Attempt())->try($action)
+            ->using(...$using);
     }
 }

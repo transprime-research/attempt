@@ -10,7 +10,7 @@ class Attempt
 
     private ?string $catchUsing;
 
-    private array $tryUsing;
+    private array $tryUsing = [];
 
     public function try(\Closure $action)
     {
