@@ -23,10 +23,7 @@ class AttemptTest extends TestCase
         $attempt = new Attempt();
 
         $attempter = function ($data) {
-            if (!isset($data[1])) {
-                throw new AttemptTestException();
-            }
-            return $data[1];
+            return conditional(!isset($data[1]), new AttemptTestException(), $data[1]);
         };
 
         $result = $attempt->try($attempter)
@@ -40,10 +37,8 @@ class AttemptTest extends TestCase
     public function testAttemptSkipsAGivenException()
     {
         $attempter = function ($data) {
-            return conditional(!isset($data[1]))
-                ->then(new AttemptTestException('1 does not exist in the data'))
-                ->else($data[1])
-                ->value();
+            return conditional(!isset($data[1]), new AttemptTestException('1 failed'))
+                ->else($data[1]);
         };
 
         $this->expectException(AttemptTestException::class);
@@ -57,7 +52,7 @@ class AttemptTest extends TestCase
     public function testAttemptUsingOnHelper()
     {
         $attempter = function ($message) {
-            throw new AttemptTestException('1 does not exist in the data '.$message);
+            throw new AttemptTestException('1 does not exist in the data ' . $message);
         };
 
         $this->expectException(AttemptTestException::class);
