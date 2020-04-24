@@ -11,6 +11,6 @@ if (!function_exists('attempt')) {
         }
 
         return (new Attempt())->try($action)
-            ->using(...$using);
+            ->with(...$using);
     }
 }

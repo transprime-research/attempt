@@ -22,44 +22,56 @@ class AttemptTest extends TestCase
     {
         $attempt = new Attempt();
 
-        $attempter = function ($data) {
+        $data = [];
+
+        $attempter = function () use ($data) {
             return conditional(!isset($data[1]), new AttemptTestException(), $data[1]);
         };
 
         $result = $attempt->try($attempter)
-            ->using([])
             ->catch(AttemptTestException::class)
-            ->then();
+            ->done();
 
         $this->assertEquals(null, $result);
     }
 
     public function testAttemptSkipsAGivenException()
     {
-        $attempter = function ($data) {
+        $data = [];
+
+        $attempter = function () use ($data) {
             return conditional(!isset($data[1]), new AttemptTestException('1 failed'))
                 ->else($data[1]);
         };
 
         $this->expectException(AttemptTestException::class);
 
-        attempt($attempter)
-            ->using([])
-            ->catch(AttemptTest2Exception::class)
-            ->then();
+        attempt($attempter)->catch(AttemptTest2Exception::class)();
     }
 
     public function testAttemptUsingOnHelper()
     {
-        $attempter = function ($message) {
+        $message = 'message';
+
+        $attempter = function () use ($message) {
             throw new AttemptTestException('1 does not exist in the data ' . $message);
         };
 
-        $this->expectException(AttemptTestException::class);
+        $this->assertEquals(
+            'Works not',
+            attempt($attempter, 'Works not')
+                ->catch(AttemptTestException::class)
+                ->done()
+        );
+    }
 
-        attempt($attempter, 'Works not')
-            ->catch(AttemptTest2Exception::class)
-            ->then();
+    public function testOnMethod()
+    {
+        $this->assertEquals(
+            null,
+            Attempt::on(fn() => conditional(true, new AttemptTestException))
+                ->catch(AttemptTestException::class)()
+        );
     }
 }
 
