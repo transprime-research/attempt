@@ -12,6 +12,7 @@
 
 ## About Attempt
 Try and catch in php objected oriented way
+> Do It like a pro :ok:
 
 ## Usage
 
