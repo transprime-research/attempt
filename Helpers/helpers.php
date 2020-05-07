@@ -4,13 +4,18 @@ use Attempt\Attempt;
 
 if (!function_exists('attempt')) {
 
-    function attempt(Closure $action, ...$using)
+    /**
+     * @param Closure $action
+     * @param mixed $default
+     * @return Attempt
+     */
+    function attempt(Closure $action, $default = null)
     {
-        if (! $using) {
+        if (! $default) {
             return (new Attempt())->try($action);
         }
 
         return (new Attempt())->try($action)
-            ->with(...$using);
+            ->with(...$default);
     }
 }
