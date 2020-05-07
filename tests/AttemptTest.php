@@ -79,6 +79,18 @@ class AttemptTest extends TestCase
             })->catch(AttemptTestException::class)()
         );
     }
+
+    public function testMultipleCatch()
+    {
+        $this->assertEquals(
+            'abc',
+            Attempt::on(function () {
+                conditional(true, new AttemptTestException('Attempt fails'));
+            })->catch(\LengthException::class, AttemptTestException::class)
+                ->with('abc')
+            ->done()
+        );
+    }
 }
 
 class AttemptTestException extends Exception

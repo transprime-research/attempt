@@ -7,9 +7,15 @@ use Exception;
 
 class Attempt
 {
-    private Closure $triable;
+    /**
+     * @var Closure $triable
+     */
+    private $triable;
 
-    private string $catchable;
+    /**
+     * @var array $catchables
+     */
+    private $catchables;
 
     private $default = null;
 
@@ -55,24 +61,26 @@ class Attempt
      * @param $exception
      * @return $this
      */
-    public function catch($exception): self
+    public function catch(...$exception): self
     {
-        $this->catchable = $exception;
+        $this->catchables = $exception;
 
         return $this;
     }
 
     public function done(Closure $using = null)
     {
-        $catchableClass = is_string($this->catchable)
-            ? $this->catchable
-            : get_class($this->catchable);
+        $catchableClasses = arrayed($this->catchables)->map(function ($catchable) {
+            return is_string($catchable) ? $catchable : get_class($catchable);
+        })->result();
 
         try {
             return $this->getTriable()();
         } catch (Exception $exception) {
-            return conditional(get_class($exception) === $catchableClass)
-                ->then(fn() => $using ? $using($exception) : $this->default)
+            return conditional(in_array(get_class($exception), $catchableClasses, true))
+                ->then(function () use ($using, $exception) {
+                    return $using ? $using($exception) : $this->default;
+                })
                 ->else($exception);
         }
     }
