@@ -16,11 +16,65 @@ Try and catch in php objected oriented way
 ## Usage
 
 ```php
-attempt(fn() => $this->client->request($method, $uri, $options))
+$response = attempt(fn() => $this->client->get('ninja'))
     ->catch(ConnectException::class)
-    ->done();
+    ->done(fn() => []); //done can be replaced with ()
 ```
 
+Or:
+
+```php
+$response = Attempt::on(fn() => $this->client->get('ninja'))
+    ->catch(AttemptTestException::class)(); // or ->done()
+
+// Do something with Response
+```
+
+`catch` method accepts an Exception object:
+
+```php
+$response = Attempt::on(fn() => $this->client->get('ninja'))
+    ->catch(\AttemptTestException())(); // or ->done()
+
+// Do something with Response
+```
+
+Set a default response:
+
+```php
+$response = Attempt::on(fn() => $this->client->get('ninja'))
+    ->with(['abc'])
+    ->catch(AttemptTestException::class)
+    ->done(); // ['abc'] is returned if exception is caught  
+```
+
+Multiple Exception
+
+```php
+$response = Attempt::on(fn() => $this->client->get('ninja'))
+    ->catch(AttemptTestException::class, HttpResponseException::class)()
+
+// Do something with Response
+```
+
+Do more with the caught Exception response:
+
+```php
+$response = Attempt::on(fn() => $this->client->get('ninja'))
+    ->catch(AttemptTestException::class, HttpResponseException::class)
+    ->done(fn(\HttpResponseException $e) => logger()->error($e->getMessage()));
+
+// Do something with Response
+```
+
+More to come: Multiple catch block
+
+```php
+attempt(fn() => $this->execute())
+    ->catch(NinjaException::class)
+    ->catch(AnotherExeption::class)
+    ->done(fn($ex) => logger()->error($ex));
+```
 
 ## Additional Information
 
@@ -29,8 +83,8 @@ Be aware that this package is part of a series of "The Proof Of Concept".
 See other packages in this series here:
 
 - https://github.com/transprime-research/piper [Smart Piping in PHP]
-- https://github.com/omitobi/conditional [A smart PHP if...elseif...else statement]
 - https://github.com/transprime-research/arrayed [A smarter Array now like an object]
+- https://github.com/omitobi/conditional [A smart PHP if...elseif...else statement]
 - https://github.com/omitobi/carbonate [A smart Carbon + Collection package]
 - https://github.com/omitobi/laravel-habitue [Jsonable Http Request(er) package with Collections response]
 
