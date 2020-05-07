@@ -15,17 +15,22 @@ class AttemptTest extends TestCase
 
     public function testAttemptHelperCreatesAttemptObject()
     {
-        $this->assertEquals(attempt(fn() => 1), (new Attempt())->try(fn() => 1));
+        $this->assertEquals(
+            attempt(function () {
+                return 1;
+            }),
+            (new Attempt())->try(function () {
+                return 1;
+            })
+        );
     }
 
     public function testTryAndCatch()
     {
         $attempt = new Attempt();
 
-        $data = [];
-
-        $attempter = function () use ($data) {
-            return conditional(!isset($data[1]), new AttemptTestException(), $data[1]);
+        $attempter = function () {
+            return conditional(!isset($data), new AttemptTestException(), 1);
         };
 
         $result = $attempt->try($attempter)
@@ -69,8 +74,9 @@ class AttemptTest extends TestCase
     {
         $this->assertEquals(
             null,
-            Attempt::on(fn() => conditional(true, new AttemptTestException))
-                ->catch(AttemptTestException::class)()
+            Attempt::on(function () {
+                conditional(true, new AttemptTestException);
+            })->catch(AttemptTestException::class)()
         );
     }
 }
