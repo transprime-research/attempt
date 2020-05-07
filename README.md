@@ -22,7 +22,17 @@ $response = attempt(fn() => $this->client->get('ninja'))
     ->done(fn() => []); //done can be replaced with ()
 ```
 
-Or:
+## Installation:
+
+Minimum requirement is PHP 7.2+ and Composer.
+
+Install with this:
+
+```shell script
+composer require transprime-research/attempt
+```
+
+## Other usage:
 
 ```php
 $response = Attempt::on(fn() => $this->client->get('ninja'))
