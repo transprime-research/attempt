@@ -16,6 +16,6 @@ if (!function_exists('attempt')) {
         }
 
         return (new Attempt())->try($action)
-            ->with(...$default);
+            ->with($default);
     }
 }
