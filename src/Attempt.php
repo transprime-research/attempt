@@ -105,12 +105,11 @@ class Attempt
                 $defaultCalled = $default;
 
                 if ($this->isClosure($default)) {
-
                     $defaultCalled = $default();
                 }
 
                 if ($this->isClosure($using)) {
-                    return $using($exception);
+                    return $using($exception, $defaultCalled);
                 }
 
                 return $defaultCalled;

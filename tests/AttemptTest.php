@@ -130,7 +130,7 @@ class AttemptTest extends TestCase
                 ->done()
         );
 
-        //get default value from a closure of the first exception
+        //get default value from a closure of the exception
         $this->assertEquals(
             'efg',
             Attempt::on(function () {
@@ -141,6 +141,21 @@ class AttemptTest extends TestCase
                     return 'efg';
                 })
                 ->done()
+        );
+
+        //get default value from a closure of the exception, handle all in done()
+        $this->assertEquals(
+            'EFG',
+            Attempt::on(function () {
+                throw new AttemptTestException('Attempt fails');
+            })
+                ->catch(\LengthException::class, 'ccc')
+                ->catch(AttemptTestException::class, function () {
+                    return 'efg';
+                })
+                ->done(function ($exception, $caughtValue) {
+                    return strtoupper($caughtValue);
+                })
         );
     }
 }
