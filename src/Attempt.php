@@ -60,33 +60,55 @@ class Attempt
     /**
      * The exception to catch
      *
-     * @param $exception
+     * @param string|callable|mixed $exception
      * @return $this
      */
     public function catch(...$exception): self
     {
-        $this->catchables = arrayed(...$this->catchables, ...$exception)
-            ->unique() //proxied arrayed call for array_unique
-            ->values();
+        $reversed = \arrayed(...$exception);
+
+        $default = $reversed->reverse()->offsetGet(0);
+
+        if (is_string($default)) {
+            try {
+                $default = new $default instanceof \Throwable ? null : $this->default;
+            } catch (\Throwable $exception) {
+                $reversed->offsetUnset(0);
+            }
+        }
+
+        $exceptionList = $reversed
+            ->values()
+            ->map(function ($catchable) {
+                return is_string($catchable) ? $catchable : get_class($catchable);
+            })
+            ->flip()
+            ->map(function () use ($default) {
+                return $default;
+            });
+
+        if ($this->catchables->empty()) {
+            $this->catchables = $exceptionList;
+        } else {
+            $this->catchables = \arrayed($exceptionList->result())->merge($this->catchables->result());
+        }
 
         return $this;
     }
 
     public function done(Closure $using = null)
     {
-        $catchableClasses = $this->catchables->map(function ($catchable) {
-            return is_string($catchable) ? $catchable : get_class($catchable);
-        });
-
         try {
             return $this->getTriable()();
         } catch (\Throwable $exception) {
-            $handler = function () use ($using, $exception) {
-                return $using ? $using($exception) : $this->default;
+            $handler = function ($default) use ($using, $exception) {
+                return $using ? $using($exception) : $default;
             };
 
-            if ($catchableClasses->contains(get_class($exception))) {
-                return $handler();
+            $exceptionClass = get_class($exception);
+
+            if ($this->catchables->offsetExists($exceptionClass)) {
+                return $handler($this->catchables->offsetGet($exceptionClass) ?? $this->default);
             }
 
             throw $exception;

@@ -105,6 +105,19 @@ class AttemptTest extends TestCase
                 ->done()
         );
     }
+
+    public function testMultipleCatchMethodsWithDefaultValues()
+    {
+        $this->assertEquals(
+            'ccc',
+            Attempt::on(function () {
+                throw new AttemptTestException('Attempt fails');
+            })
+                ->catch(AttemptTest2Exception::class, 'efg')
+                ->catch(AttemptTestException::class, \LengthException::class, 'ccc')
+                ->done()
+        );
+    }
 }
 
 class AttemptTestException extends Exception
