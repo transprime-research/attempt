@@ -108,12 +108,24 @@ class AttemptTest extends TestCase
 
     public function testMultipleCatchMethodsWithDefaultValues()
     {
+        //get default value exception matters
         $this->assertEquals(
             'ccc',
             Attempt::on(function () {
                 throw new AttemptTestException('Attempt fails');
             })
                 ->catch(AttemptTest2Exception::class, 'efg')
+                ->catch(AttemptTestException::class, \LengthException::class, 'ccc')
+                ->done()
+        );
+
+        //get default value of the first exception
+        $this->assertEquals(
+            'efg',
+            Attempt::on(function () {
+                throw new AttemptTestException('Attempt fails');
+            })
+                ->catch(AttemptTest2Exception::class, AttemptTestException::class, 'efg')
                 ->catch(AttemptTestException::class, \LengthException::class, 'ccc')
                 ->done()
         );
