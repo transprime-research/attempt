@@ -3,7 +3,7 @@
 namespace Attempt;
 
 use Closure;
-use Exception;
+use Transprime\Arrayed\Arrayed;
 
 class Attempt
 {
@@ -13,7 +13,7 @@ class Attempt
     private $triable;
 
     /**
-     * @var array $catchables
+     * @var Arrayed $catchables
      */
     private $catchables;
 
@@ -37,6 +37,8 @@ class Attempt
 
     public function try(Closure $action)
     {
+        $this->catchables = arrayed();
+
         $this->triable = $action;
 
         return $this;
@@ -58,35 +60,87 @@ class Attempt
     /**
      * The exception to catch
      *
-     * @param $exception
+     * @param string|callable|mixed $exception
      * @return $this
      */
     public function catch(...$exception): self
     {
-        $this->catchables = $exception;
+        $reversed = \arrayed(...$exception);
+
+        $default = $reversed->reverse()->offsetGet(0);
+
+        if (is_string($default)) {
+            try {
+                $default = new $default instanceof \Throwable ? null : $default;
+            } catch (\Throwable $exception) {
+                $reversed->offsetUnset(0);
+            }
+        }
+
+        $exceptionList = $reversed
+            ->values()
+            ->map(function ($catchable) {
+                return is_string($catchable) ? $catchable : get_class($catchable);
+            })
+            ->flip()
+            ->map(function () use ($default) {
+                return $default;
+            });
+
+        if ($this->catchables->empty()) {
+            $this->catchables = $exceptionList;
+        } else {
+            $this->catchables = \arrayed($exceptionList->result())->merge($this->catchables->result());
+        }
 
         return $this;
     }
 
     public function done(Closure $using = null)
     {
-        $catchableClasses = arrayed($this->catchables)->map(function ($catchable) {
-            return is_string($catchable) ? $catchable : get_class($catchable);
-        })->result();
-
         try {
             return $this->getTriable()();
-        } catch (Exception $exception) {
-            return conditional(in_array(get_class($exception), $catchableClasses, true))
-                ->then(function () use ($using, $exception) {
-                    return $using ? $using($exception) : $this->default;
-                })
-                ->else($exception);
+        } catch (\Throwable $exception) {
+            $handler = function ($default) use ($using, $exception) {
+                $defaultCalled = $default;
+
+                if ($this->isClosure($default)) {
+                    $defaultCalled = $default();
+                }
+
+                if ($this->isClosure($using)) {
+                    return $using($exception, $defaultCalled);
+                }
+
+                return $defaultCalled;
+            };
+
+            $exceptionClass = get_class($exception);
+
+            if ($this->catchables->offsetExists($exceptionClass)) {
+                return $handler(
+                    $this->catchables->offsetGet($exceptionClass) ?? $this->default
+                );
+            }
+
+            unset($this->catchables);
+            unset($this->triable);
+            unset($this->default);
+
+            throw $exception;
         }
     }
 
+    /**
+     * @return Closure | callable
+     */
     private function getTriable()
     {
         return $this->triable;
+    }
+
+    private function isClosure($value): bool
+    {
+        return $value instanceof Closure;
     }
 }

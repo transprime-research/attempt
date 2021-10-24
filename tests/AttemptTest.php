@@ -30,7 +30,7 @@ class AttemptTest extends TestCase
         $attempt = new Attempt();
 
         $attempter = function () {
-            return conditional(!isset($data), new AttemptTestException(), 1);
+            throw new AttemptTestException();
         };
 
         $result = $attempt->try($attempter)
@@ -45,8 +45,10 @@ class AttemptTest extends TestCase
         $data = [];
 
         $attempter = function () use ($data) {
-            return conditional(!isset($data[1]), new AttemptTestException('1 failed'))
-                ->else($data[1]);
+            if(!isset($data[1])) {
+                throw new AttemptTestException('1 failed');
+            }
+            return $data[1];
         };
 
         $this->expectException(AttemptTestException::class);
@@ -75,20 +77,87 @@ class AttemptTest extends TestCase
         $this->assertEquals(
             null,
             Attempt::on(function () {
-                conditional(true, new AttemptTestException);
+                throw new AttemptTestException();
             })->catch(AttemptTestException::class)()
         );
     }
 
-    public function testMultipleCatch()
+    public function testManyExceptions()
     {
         $this->assertEquals(
             'abc',
             Attempt::on(function () {
-                conditional(true, new AttemptTestException('Attempt fails'));
+                throw new AttemptTestException('Attempt fails');
             })->catch(\LengthException::class, AttemptTestException::class)
                 ->with('abc')
             ->done()
+        );
+    }
+
+    public function testMultipleCatchMethods()
+    {
+        $this->assertEquals(
+            'abc',
+            Attempt::on(function () {
+                throw new AttemptTestException('Attempt fails');
+            })
+                ->catch(AttemptTestException::class)
+                ->catch(\LengthException::class)
+                ->with('abc')
+                ->done()
+        );
+    }
+
+    public function testMultipleCatchMethodsWithDefaultValues()
+    {
+        //get default value exception matters
+        $this->assertEquals(
+            'ccc',
+            Attempt::on(function () {
+                throw new AttemptTestException('Attempt fails');
+            })
+                ->catch(AttemptTest2Exception::class, 'efg')
+                ->catch(AttemptTestException::class, \LengthException::class, 'ccc')
+                ->done()
+        );
+
+        //get default value of the first exception
+        $this->assertEquals(
+            'efg',
+            Attempt::on(function () {
+                throw new AttemptTestException('Attempt fails');
+            })
+                ->catch(AttemptTest2Exception::class, AttemptTestException::class, 'efg')
+                ->catch(AttemptTestException::class, \LengthException::class, 'ccc')
+                ->done()
+        );
+
+        //get default value from a closure of the exception
+        $this->assertEquals(
+            'efg',
+            Attempt::on(function () {
+                throw new AttemptTestException('Attempt fails');
+            })
+                ->catch(\LengthException::class, 'ccc')
+                ->catch(AttemptTestException::class, function () {
+                    return 'efg';
+                })
+                ->done()
+        );
+
+        //get default value from a closure of the exception, handle all in done()
+        $this->assertEquals(
+            'EFG',
+            Attempt::on(function () {
+                throw new AttemptTestException('Attempt fails');
+            })
+                ->catch(\LengthException::class, 'ccc')
+                ->catch(AttemptTestException::class, function () {
+                    return 'efg';
+                })
+                ->done(function ($exception, $caughtValue) {
+                    return strtoupper($caughtValue);
+                })
         );
     }
 }
