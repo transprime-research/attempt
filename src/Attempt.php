@@ -139,7 +139,7 @@ class Attempt
         return $this->triable;
     }
 
-    private function isClosure($value)
+    private function isClosure($value): bool
     {
         return $value instanceof Closure;
     }
