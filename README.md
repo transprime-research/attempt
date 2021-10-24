@@ -68,6 +68,17 @@ $response = Attempt::on(fn() => $this->client->get('ninja'))
 // Do something with Response
 ```
 
+Multiple Catch block
+
+```php
+attempt(fn() => $this->execute())
+    ->catch(NinjaException::class)
+    ->catch(AnotherExeption::class)
+    ->done(fn($ex) => logger()->error($ex));
+    
+// Do something with Response
+```
+
 Do more with the caught Exception response:
 
 ```php
@@ -78,7 +89,7 @@ $response = Attempt::on(fn() => $this->client->get('ninja'))
 // Do something with Response
 ```
 
-More to come: Multiple catch block
+More to come: Multiple catch block with default value
 
 ```php
 attempt(fn() => $this->execute())
@@ -89,7 +100,7 @@ attempt(fn() => $this->execute())
 
 ## Additional Information
 
-Be aware that this package is part of a series of "The Proof Of Concept".
+Be aware that this package is part of a series of "The Code Dare".
 
 See other packages in this series here:
 

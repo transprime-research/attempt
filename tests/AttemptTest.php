@@ -80,7 +80,7 @@ class AttemptTest extends TestCase
         );
     }
 
-    public function testMultipleCatch()
+    public function testManyExceptions()
     {
         $this->assertEquals(
             'abc',
@@ -89,6 +89,20 @@ class AttemptTest extends TestCase
             })->catch(\LengthException::class, AttemptTestException::class)
                 ->with('abc')
             ->done()
+        );
+    }
+
+    public function testMultipleCatchMethods()
+    {
+        $this->assertEquals(
+            'abc',
+            Attempt::on(function () {
+                throw new AttemptTestException('Attempt fails');
+            })
+                ->catch(AttemptTestException::class)
+                ->catch(\LengthException::class)
+                ->with('abc')
+                ->done()
         );
     }
 }

@@ -3,7 +3,7 @@
 namespace Attempt;
 
 use Closure;
-use Exception;
+use Transprime\Arrayed\Arrayed;
 
 class Attempt
 {
@@ -13,7 +13,7 @@ class Attempt
     private $triable;
 
     /**
-     * @var array $catchables
+     * @var Arrayed $catchables
      */
     private $catchables;
 
@@ -37,6 +37,8 @@ class Attempt
 
     public function try(Closure $action)
     {
+        $this->catchables = arrayed();
+
         $this->triable = $action;
 
         return $this;
@@ -63,28 +65,37 @@ class Attempt
      */
     public function catch(...$exception): self
     {
-        $this->catchables = $exception;
+        $this->catchables = arrayed(...$this->catchables, ...$exception)
+            ->unique() //proxied arrayed call for array_unique
+            ->values();
 
         return $this;
     }
 
     public function done(Closure $using = null)
     {
-        $catchableClasses = arrayed($this->catchables)->map(function ($catchable) {
+        $catchableClasses = $this->catchables->map(function ($catchable) {
             return is_string($catchable) ? $catchable : get_class($catchable);
-        })->result();
+        });
 
         try {
             return $this->getTriable()();
-        } catch (Exception $exception) {
-            return conditional(in_array(get_class($exception), $catchableClasses, true))
-                ->then(function () use ($using, $exception) {
-                    return $using ? $using($exception) : $this->default;
-                })
-                ->else($exception);
+        } catch (\Throwable $exception) {
+            $handler = function () use ($using, $exception) {
+                return $using ? $using($exception) : $this->default;
+            };
+
+            if ($catchableClasses->contains(get_class($exception))) {
+                return $handler();
+            }
+
+            throw $exception;
         }
     }
 
+    /**
+     * @return Closure | callable
+     */
     private function getTriable()
     {
         return $this->triable;
