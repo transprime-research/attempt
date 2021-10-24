@@ -58,7 +58,22 @@ $response = Attempt::on(fn() => $this->client->get('ninja'))
     ->catch(AttemptTestException::class)
     ->done(); // ['abc'] is returned if exception is caught  
 ```
-
+```php
+// with default value
+attempt(fn() => $this->execute())
+    ->catch(AttemptTestException::class, 'It is done') //returns 'It is done'
+    ->done();
+    
+// closure as default value
+attempt(fn() => $this->execute())
+    ->catch(AttemptTestException::class, fn() => 'It is done') //returns 'It is done'
+    ->done();
+    
+// handle the resolved default value in done()
+attempt(fn() => $this->execute())
+    ->catch(AttemptTestException::class, fn() => 'error') //returns 'It is done'
+    ->done(fn(Exception $ex, $severity) => logger($severity, $ex));
+```
 Multiple Exception
 
 ```php
@@ -72,11 +87,9 @@ Multiple Catch block
 
 ```php
 attempt(fn() => $this->execute())
-    ->catch(NinjaException::class)
-    ->catch(AnotherExeption::class)
+    ->catch(NinjaException::class, 'Ninja error') //returns 'It is done')
+    ->catch(AnotherExeption::class, 'Another error') //returns 'It is done'
     ->done(fn($ex) => logger()->error($ex));
-    
-// Do something with Response
 ```
 
 Do more with the caught Exception response:
@@ -89,18 +102,15 @@ $response = Attempt::on(fn() => $this->client->get('ninja'))
 // Do something with Response
 ```
 
-More to come: Multiple catch block with default value
+More to come: Pass the execution of a default value to a callable Class
 
 ```php
-attempt(fn() => $this->execute())
-    ->catch(NinjaException::class)
-    ->catch(AnotherExeption::class)
-    ->done(fn($ex) => logger()->error($ex));
+// loading...
 ```
 
 ## Additional Information
 
-Be aware that this package is part of a series of "The Code Dare".
+This package is part of a series of "The Code Dare".
 
 See other packages in this series here:
 
