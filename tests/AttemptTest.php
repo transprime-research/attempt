@@ -129,6 +129,19 @@ class AttemptTest extends TestCase
                 ->catch(AttemptTestException::class, \LengthException::class, 'ccc')
                 ->done()
         );
+
+        //get default value from a closure of the first exception
+        $this->assertEquals(
+            'efg',
+            Attempt::on(function () {
+                throw new AttemptTestException('Attempt fails');
+            })
+                ->catch(\LengthException::class, 'ccc')
+                ->catch(AttemptTestException::class, function () {
+                    return 'efg';
+                })
+                ->done()
+        );
     }
 }
 

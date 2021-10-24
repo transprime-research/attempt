@@ -71,7 +71,7 @@ class Attempt
 
         if (is_string($default)) {
             try {
-                $default = new $default instanceof \Throwable ? null : $this->default;
+                $default = new $default instanceof \Throwable ? null : $default;
             } catch (\Throwable $exception) {
                 $reversed->offsetUnset(0);
             }
@@ -102,14 +102,31 @@ class Attempt
             return $this->getTriable()();
         } catch (\Throwable $exception) {
             $handler = function ($default) use ($using, $exception) {
-                return $using ? $using($exception) : $default;
+                $defaultCalled = $default;
+
+                if ($this->isClosure($default)) {
+
+                    $defaultCalled = $default();
+                }
+
+                if ($this->isClosure($using)) {
+                    return $using($exception);
+                }
+
+                return $defaultCalled;
             };
 
             $exceptionClass = get_class($exception);
 
             if ($this->catchables->offsetExists($exceptionClass)) {
-                return $handler($this->catchables->offsetGet($exceptionClass) ?? $this->default);
+                return $handler(
+                    $this->catchables->offsetGet($exceptionClass) ?? $this->default
+                );
             }
+
+            unset($this->catchables);
+            unset($this->triable);
+            unset($this->default);
 
             throw $exception;
         }
@@ -121,5 +138,10 @@ class Attempt
     private function getTriable()
     {
         return $this->triable;
+    }
+
+    private function isClosure($value)
+    {
+        return $value instanceof Closure;
     }
 }
