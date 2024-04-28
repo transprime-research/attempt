@@ -20,7 +20,7 @@
     }
   ],
   "require": {
-    "php": ">=7.2",
+    "php": ">=7.4",
     "transprime-research/arrayed": "^1.5.1"
   },
   "require-dev": {

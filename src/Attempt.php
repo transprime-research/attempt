@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Attempt;
 
 use Closure;
@@ -7,16 +9,13 @@ use Transprime\Arrayed\Arrayed;
 
 class Attempt
 {
-    /**
-     * @var Closure $triable
-     */
-    private $triable;
+    private Closure $triable;
+
+    private Arrayed $catchables;
 
     /**
-     * @var Arrayed $catchables
+     * @var null|mixed $default
      */
-    private $catchables;
-
     private $default = null;
 
     public function __invoke(Closure $using = null)

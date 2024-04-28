@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Attempt\Tests;
 
 use Attempt\Attempt;
