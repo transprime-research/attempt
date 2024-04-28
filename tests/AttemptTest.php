@@ -162,6 +162,31 @@ class AttemptTest extends TestCase
                 })
         );
     }
+
+    public function testOtherCallablesAreAllowedOnAttempt(): void
+    {
+        $this->assertEquals(
+            'abc',
+            Attempt::on(new AttempterStub())
+                ->catch(AttemptTestException::class, 'abc')
+                ->done(),
+        );
+    }
+
+    public function testAttemptOnObjectWithMethod(): void
+    {
+        $this->assertEquals(
+            'abc',
+            //Allow first class callable syntax from PHP 8.1
+            Attempt::on(new AttempterStub(), ['failThis'])
+                ->catch(AttemptTest2Exception::class, 'abc')
+                ->done(),
+        );
+
+        $this->expectException(AttemptTest2Exception::class);
+
+        Attempt::on(new AttempterStub(), ['failThis'])->done();
+    }
 }
 
 class AttemptTestException extends Exception
@@ -172,4 +197,17 @@ class AttemptTestException extends Exception
 class AttemptTest2Exception extends Exception
 {
 
+}
+
+class AttempterStub
+{
+    public function __invoke()
+    {
+        throw new AttemptTestException('Attempt fails');
+    }
+
+    public function failThis(): void
+    {
+        throw new AttemptTest2Exception('Attempt fails 2');
+    }
 }

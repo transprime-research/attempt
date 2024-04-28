@@ -9,7 +9,10 @@ use Transprime\Arrayed\Arrayed;
 
 class Attempt
 {
-    private Closure $triable;
+    /**
+     * @var Closure|callable $triable
+     */
+    private $triable;
 
     private Arrayed $catchables;
 
@@ -17,6 +20,7 @@ class Attempt
      * @var null|mixed $default
      */
     private $default = null;
+    private ?array $handler = null;
 
     public function __invoke(Closure $using = null)
     {
@@ -24,21 +28,28 @@ class Attempt
     }
 
     /**
-     * Creat new instance of Attempt statically and call try()
+     * Create new instance of Attempt statically and call try()
      *
-     * @param Closure $action
+     * @param Closure|callable $action
      * @return Attempt
      */
-    public static function on(Closure $action)
+    public static function on($action, ?array $handler = null): self
     {
-        return (new static())->try($action);
+        return (new static())->try($action, $handler);
     }
 
-    public function try(Closure $action)
+
+    /**
+     * @param Closure|callable $action
+     * @return Attempt
+     */
+    public function try($action, ?array $handler = null): self
     {
         $this->catchables = arrayed();
 
         $this->triable = $action;
+
+        $this->handler = $handler;
 
         return $this;
     }
@@ -98,7 +109,7 @@ class Attempt
     public function done(Closure $using = null)
     {
         try {
-            return $this->getTriable()();
+            return $this->handleTriable();
         } catch (\Throwable $exception) {
             $handler = function ($default) use ($using, $exception) {
                 $defaultCalled = $default;
@@ -131,6 +142,29 @@ class Attempt
     }
 
     /**
+     * @return mixed
+     * @throws AttemptInvalidCallableException
+     */
+    private function handleTriable()
+    {
+        if (!empty($this->handler)) {
+            $methodCalls = [...$this->handler];
+            // Add arrayed()->pop();
+            // Add arrayed()->head();
+            // Add arrayed()->tail();
+            $method = \array_pop($methodCalls) ?? null;
+
+            if (empty($method)) {
+                throw new AttemptInvalidCallableException('The provided handler is invalid.');
+            }
+
+            return $this->getTriable()->{$method}(...$methodCalls);
+        }
+
+        return $this->getTriable()();
+    }
+
+    /**
      * @return Closure | callable
      */
     private function getTriable()
@@ -141,5 +175,12 @@ class Attempt
     private function isClosure($value): bool
     {
         return $value instanceof Closure;
+    }
+
+    private function validateCallable($value): void
+    {
+        if (\arrayed($this->isClosure($value), is_callable($value)) == [false, false]) {
+            throw new AttemptInvalidCallableException('The provided value is not a callable.');
+        }
     }
 }
