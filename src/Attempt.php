@@ -9,7 +9,10 @@ use Transprime\Arrayed\Arrayed;
 
 class Attempt
 {
-    private Closure $triable;
+    /**
+     * @var Closure|callable $triable
+     */
+    private $triable;
 
     private Arrayed $catchables;
 
@@ -18,23 +21,28 @@ class Attempt
      */
     private $default = null;
 
-    public function __invoke(Closure $using = null)
+    public function __invoke(Closure $using = null): self
     {
         return $this->done($using);
     }
 
     /**
-     * Creat new instance of Attempt statically and call try()
+     * Create new instance of Attempt statically and call try()
      *
-     * @param Closure $action
+     * @param Closure|callable $action
      * @return Attempt
      */
-    public static function on(Closure $action)
+    public static function on($action): self
     {
         return (new static())->try($action);
     }
 
-    public function try(Closure $action)
+
+    /**
+     * @param Closure|callable $action
+     * @return Attempt
+     */
+    public function try($action): self
     {
         $this->catchables = arrayed();
 
@@ -141,5 +149,12 @@ class Attempt
     private function isClosure($value): bool
     {
         return $value instanceof Closure;
+    }
+
+    private function validateCallable($value): void
+    {
+        if (\arrayed($this->isClosure($value), is_callable($value)) == [false, false]) {
+            throw new AttemptInvalidCallableException('The provided value is not a callable.');
+        }
     }
 }

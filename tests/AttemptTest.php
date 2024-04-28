@@ -162,6 +162,16 @@ class AttemptTest extends TestCase
                 })
         );
     }
+
+    public function testOtherCallablesAreAllowedOnAttempt(): void
+    {
+        $this->assertEquals(
+            'abc',
+            Attempt::on(new AttempterStub())
+                ->catch(AttemptTestException::class, 'abc')
+                ->done(),
+        );
+    }
 }
 
 class AttemptTestException extends Exception
@@ -172,4 +182,12 @@ class AttemptTestException extends Exception
 class AttemptTest2Exception extends Exception
 {
 
+}
+
+class AttempterStub
+{
+    public function __invoke()
+    {
+        throw new AttemptTestException('Attempt fails');
+    }
 }
