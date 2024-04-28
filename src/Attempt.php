@@ -20,8 +20,9 @@ class Attempt
      * @var null|mixed $default
      */
     private $default = null;
+    private ?array $handler = null;
 
-    public function __invoke(Closure $using = null): self
+    public function __invoke(Closure $using = null)
     {
         return $this->done($using);
     }
@@ -32,9 +33,9 @@ class Attempt
      * @param Closure|callable $action
      * @return Attempt
      */
-    public static function on($action): self
+    public static function on($action, ?array $handler = null): self
     {
-        return (new static())->try($action);
+        return (new static())->try($action, $handler);
     }
 
 
@@ -42,11 +43,13 @@ class Attempt
      * @param Closure|callable $action
      * @return Attempt
      */
-    public function try($action): self
+    public function try($action, ?array $handler = null): self
     {
         $this->catchables = arrayed();
 
         $this->triable = $action;
+
+        $this->handler = $handler;
 
         return $this;
     }
@@ -106,7 +109,7 @@ class Attempt
     public function done(Closure $using = null)
     {
         try {
-            return $this->getTriable()();
+            return $this->handleTriable();
         } catch (\Throwable $exception) {
             $handler = function ($default) use ($using, $exception) {
                 $defaultCalled = $default;
@@ -136,6 +139,29 @@ class Attempt
 
             throw $exception;
         }
+    }
+
+    /**
+     * @return mixed
+     * @throws AttemptInvalidCallableException
+     */
+    private function handleTriable()
+    {
+        if (!empty($this->handler)) {
+            $methodCalls = [...$this->handler];
+            // Add arrayed()->pop();
+            // Add arrayed()->head();
+            // Add arrayed()->tail();
+            $method = \array_pop($methodCalls) ?? null;
+
+            if (empty($method)) {
+                throw new AttemptInvalidCallableException('The provided handler is invalid.');
+            }
+
+            return $this->getTriable()->{$method}(...$methodCalls);
+        }
+
+        return $this->getTriable()();
     }
 
     /**
