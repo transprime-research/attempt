@@ -21,7 +21,7 @@
   ],
   "require": {
     "php": ">=7.4",
-    "transprime-research/arrayed": "^1.5.1"
+    "transprime-research/arrayed": "^2.2"
   },
   "require-dev": {
     "phpunit/phpunit": "~8.0",
