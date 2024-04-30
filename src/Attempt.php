@@ -111,33 +111,7 @@ class Attempt
         try {
             return $this->handleTriable();
         } catch (\Throwable $exception) {
-            $handler = function ($default) use ($using, $exception) {
-                $defaultCalled = $default;
-
-                if ($this->isClosure($default)) {
-                    $defaultCalled = $default();
-                }
-
-                if ($this->isClosure($using)) {
-                    return $using($exception, $defaultCalled);
-                }
-
-                return $defaultCalled;
-            };
-
-            $exceptionClass = get_class($exception);
-
-            if ($this->catchables->offsetExists($exceptionClass)) {
-                return $handler(
-                    $this->catchables->offsetGet($exceptionClass) ?? $this->default
-                );
-            }
-
-            unset($this->catchables);
-            unset($this->triable);
-            unset($this->default);
-
-            throw $exception;
+            return $this->handleException($exception, $using);
         }
     }
 
@@ -152,16 +126,60 @@ class Attempt
             // Add arrayed()->pop();
             // Add arrayed()->head();
             // Add arrayed()->tail();
-            $method = \array_pop($methodCalls) ?? null;
+            $method = \arrayed($methodCalls)->head() ?? null;
 
             if (empty($method)) {
                 throw new AttemptInvalidCallableException('The provided handler is invalid.');
             }
 
-            return $this->getTriable()->{$method}(...$methodCalls);
+            return $this->getTriable()->{$method}(...\arrayed($methodCalls)->tail());
         }
 
         return $this->getTriable()();
+    }
+
+    private function handleException(\Throwable $exception, Closure $using = null)
+    {
+        $handler = function ($default) use ($using, $exception) {
+            $defaultCalled = $default;
+
+            if ($this->isClosure($default)) {
+                $defaultCalled = $default();
+            }
+
+            if ($this->isClosure($using)) {
+                return $using($exception, $defaultCalled);
+            }
+
+            return $defaultCalled;
+        };
+
+        $exceptionClass = get_class($exception);
+
+        // We give priority to parent class first.
+        // If the parent class is not found, we will try to find the child class.
+        $parentExceptionKey = $this->catchables->search(
+            fn($value, $key) => $exceptionClass === $key || \is_subclass_of($exceptionClass, $key),
+            true,
+            false,
+        );
+
+        if ($parentExceptionKey !== false) {
+            return $handler($this->catchables->offsetGet($parentExceptionKey) ?? $this->default);
+        }
+
+
+        if ($this->catchables->offsetExists($exceptionClass)) {
+            return $handler(
+                $this->catchables->offsetGet($exceptionClass) ?? $this->default
+            );
+        }
+
+        unset($this->catchables);
+        unset($this->triable);
+        unset($this->default);
+
+        throw $exception;
     }
 
     /**

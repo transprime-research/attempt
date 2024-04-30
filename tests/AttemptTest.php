@@ -187,14 +187,24 @@ class AttemptTest extends TestCase
 
         Attempt::on(new AttempterStub(), ['failThis'])->done();
     }
+
+    public function testAttemptToCatchParentException(): void
+    {
+        $this->assertEquals(
+            'ok',
+            Attempt::on(new AttempterStub())
+                ->catch(\Throwable::class, 'ok')
+                ->done(),
+            );
+    }
 }
 
-class AttemptTestException extends Exception
+class AttemptTestException extends \Exception
 {
 
 }
 
-class AttemptTest2Exception extends Exception
+class AttemptTest2Exception extends \Exception
 {
 
 }
